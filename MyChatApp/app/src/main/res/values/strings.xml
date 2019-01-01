@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">MyChatApp</string>
+    <string name="need_new_account">Need New Account?</string>
+    <string name="need_a_new_account">Need a new account?</string>
+    <string name="log_out">Log Out</string>
+    <string name="all_users">All Users</string>
+    <string name="account_setting">Account Setting</string>
+    <string name="create_a_new_account">Create A New Account</string>
+</resources>
