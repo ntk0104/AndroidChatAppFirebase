@@ -16,6 +16,11 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+
+import java.util.HashMap;
 
 public class RegisterActivity extends AppCompatActivity {
 
@@ -28,6 +33,7 @@ public class RegisterActivity extends AppCompatActivity {
 
     private FirebaseAuth mAuth;
     private Toolbar mToolbar;
+    private DatabaseReference mfirebaseDatabase;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,15 +77,36 @@ public class RegisterActivity extends AppCompatActivity {
         });
     }
 
-    private void registerUser(String displayname, String email, String password) {
+    private void registerUser(final String displayname, String email, String password) {
         mAuth.createUserWithEmailAndPassword(email, password).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
             @Override
             public void onComplete(@NonNull Task<AuthResult> task) {
                 if(task.isSuccessful()){
-                    mRegProgress.dismiss();
-                    Intent mainintent = new Intent(RegisterActivity.this, MainActivity.class);
-                    startActivity(mainintent);
-                    finish();
+                    //get the id of current user logged in
+                    FirebaseUser current_user = FirebaseAuth.getInstance().getCurrentUser();
+                    String uid = current_user.getUid();
+                    //declare the instance of mfirebaseDatabase with child node-node: User-uid (table - row) where data will be imported
+                    mfirebaseDatabase = FirebaseDatabase.getInstance().getReference().child("Users").child(uid);
+//                    Hashmap to map data will be pushed to firebase
+                    HashMap<String, String> userMap = new HashMap<>();
+//                    data will be imported to firebase
+                    userMap.put("name", displayname);
+                    userMap.put("status", "Hi there i'm using Lapit Chat App");
+                    userMap.put("image", "default");
+                    userMap.put("thumb_image", "default");
+//                    insert all above data to firebase
+                    mfirebaseDatabase.setValue(userMap).addOnCompleteListener(new OnCompleteListener<Void>() {
+                        @Override
+                        public void onComplete(@NonNull Task<Void> task) {
+                            if(task.isSuccessful()){
+                                mRegProgress.dismiss();
+                                Intent mainintent = new Intent(RegisterActivity.this, MainActivity.class);
+                                startActivity(mainintent);
+                                finish();
+                            }
+                        }
+                    });
+
                 }else {
                     mRegProgress.hide();
                     Toast.makeText(RegisterActivity.this, "Occur Error", Toast.LENGTH_SHORT).show();
