@@ -33,7 +33,7 @@ public class RegisterActivity extends AppCompatActivity {
 
     private FirebaseAuth mAuth;
     private Toolbar mToolbar;
-    private DatabaseReference mfirebaseDatabase;
+    private DatabaseReference mDatabase;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,38 +78,48 @@ public class RegisterActivity extends AppCompatActivity {
     }
 
     private void registerUser(final String displayname, String email, String password) {
-        mAuth.createUserWithEmailAndPassword(email, password).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
+        // don't forget to add activity to this func
+        mAuth.createUserWithEmailAndPassword(email,password).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
             @Override
             public void onComplete(@NonNull Task<AuthResult> task) {
                 if(task.isSuccessful()){
-                    //get the id of current user logged in
-                    FirebaseUser current_user = FirebaseAuth.getInstance().getCurrentUser();
+//                    get current user logged in
+                    FirebaseUser current_user = mAuth.getCurrentUser();
+//                    get id of user logging in
                     String uid = current_user.getUid();
-                    //declare the instance of mfirebaseDatabase with child node-node: User-uid (table - row) where data will be imported
-                    mfirebaseDatabase = FirebaseDatabase.getInstance().getReference().child("Users").child(uid);
-//                    Hashmap to map data will be pushed to firebase
+                    mDatabase = FirebaseDatabase.getInstance().getReference();
+//                    body being posted to firebase
                     HashMap<String, String> userMap = new HashMap<>();
-//                    data will be imported to firebase
                     userMap.put("name", displayname);
-                    userMap.put("status", "Hi there i'm using Lapit Chat App");
+                    userMap.put("status", "Hi there i am using chat app");
                     userMap.put("image", "default");
                     userMap.put("thumb_image", "default");
-//                    insert all above data to firebase
-                    mfirebaseDatabase.setValue(userMap).addOnCompleteListener(new OnCompleteListener<Void>() {
+//                    Insert to root-Users-uid
+                    mDatabase.child("Users").child(uid).setValue(userMap).addOnCompleteListener(new OnCompleteListener<Void>() {
                         @Override
                         public void onComplete(@NonNull Task<Void> task) {
                             if(task.isSuccessful()){
                                 mRegProgress.dismiss();
-                                Intent mainintent = new Intent(RegisterActivity.this, MainActivity.class);
-                                startActivity(mainintent);
+                                Toast.makeText(RegisterActivity.this, "Sign up successfully", Toast.LENGTH_LONG).show();
+                                Intent mainIntent = new Intent(RegisterActivity.this, MainActivity.class);
+                                //setup for after register successfully press BACK btn won't be go back to registeractivity
+                                mainIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                                startActivity(mainIntent);
                                 finish();
+                            }else{
+                                mRegProgress.hide();
+                                Toast.makeText(RegisterActivity.this, "Sign up failed", Toast.LENGTH_LONG).show();
                             }
                         }
                     });
 
+
+
+
+
                 }else {
                     mRegProgress.hide();
-                    Toast.makeText(RegisterActivity.this, "Occur Error", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(RegisterActivity.this, "Sign up failed", Toast.LENGTH_LONG).show();
                 }
             }
         });
