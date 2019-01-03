@@ -1,8 +1,10 @@
 package com.example.kietnguyen.mychatapp;
 
+import android.content.Intent;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -25,6 +27,7 @@ public class SettingsActivity extends AppCompatActivity {
     private Button btnChangeStatus;
     private FirebaseUser mCurrentUser;
     private DatabaseReference mUserDatabase;
+    private final static int GALLERY_PICK = 1;
 
 
     @Override
@@ -61,9 +64,24 @@ public class SettingsActivity extends AppCompatActivity {
             }
         });
 
+        btnChangeStatus.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent statusIntent = new Intent(SettingsActivity.this, StatusActivity.class);
+                startActivity(statusIntent);
+            }
+        });
 
+        btnChangeAvatar.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent galleryIntent = new Intent();
+                galleryIntent.setType("image/*");
+                galleryIntent.setAction(Intent.ACTION_GET_CONTENT);
 
-
+                startActivityForResult(Intent.createChooser(galleryIntent, "SELECT IMAGE"), GALLERY_PICK);
+            }
+        });
 
     }
 }
