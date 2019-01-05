@@ -26,6 +26,7 @@ import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
+import com.squareup.picasso.Picasso;
 import com.theartofdev.edmodo.cropper.CropImage;
 import com.theartofdev.edmodo.cropper.CropImageView;
 
@@ -75,10 +76,16 @@ public class SettingsActivity extends AppCompatActivity {
                 String image = dataSnapshot.child("image").getValue().toString();
                 String status = dataSnapshot.child("status").getValue().toString();
                 String thumb_image = dataSnapshot.child("thumb_image").getValue().toString();
+                Log.d("TAG", "image = " + image);
 
                 usernameDisplay.setText(name);
                 userStatus.setText(status);
+//                if user hadn't set avatar display default avatar
+                if(!image.equals("default")){
+                    Picasso.get().load(image).into(userAvatar);
+                }
             }
+
 
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {
