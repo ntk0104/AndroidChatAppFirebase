@@ -1,14 +1,31 @@
 package com.example.kietnguyen.mychatapp;
 
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.TextView;
+
+import com.firebase.ui.database.FirebaseRecyclerAdapter;
+import com.firebase.ui.database.FirebaseRecyclerOptions;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.squareup.picasso.Picasso;
+
+import org.w3c.dom.Text;
+
+import de.hdodenhof.circleimageview.CircleImageView;
 
 public class UsersActivity extends AppCompatActivity {
 
     private Toolbar mToolbar;
     private RecyclerView mListUsers;
+    private DatabaseReference mUserDatabase;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -21,8 +38,68 @@ public class UsersActivity extends AppCompatActivity {
 //        display the button back next to the title of toolbar
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
+        mUserDatabase = FirebaseDatabase.getInstance().getReference().child("Users");
 
         mListUsers = findViewById(R.id.users_listUsers);
+        mListUsers.setHasFixedSize(true);
+        mListUsers.setLayoutManager(new LinearLayoutManager(this));
 
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        FirebaseRecyclerOptions<Users> options = new FirebaseRecyclerOptions.Builder<Users>().setQuery(mUserDatabase, Users.class).build();
+        FirebaseRecyclerAdapter adapter = new FirebaseRecyclerAdapter<Users, UsersViewHolder>(options) {
+            @Override
+            protected void onBindViewHolder(@NonNull UsersViewHolder holder, int position, @NonNull Users users) {
+                holder.setName(users.getName());
+                holder.setStatus(users.getStatus());
+                holder.setAvatar(users.getImage());
+            }
+
+            @NonNull
+            @Override
+            public UsersViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int i) {
+                View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.users_single_layout, parent, false);
+                return new UsersViewHolder(view);
+            }
+
+        };
+        mListUsers.setAdapter(adapter);
+        adapter.startListening();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+    }
+
+    public static class UsersViewHolder extends RecyclerView.ViewHolder{
+
+        View mView;
+        public UsersViewHolder(@NonNull View itemView) {
+            super(itemView);
+            mView = itemView;
+        }
+
+        public void setName(String name){
+            TextView displaynameView = mView.findViewById(R.id.users_single_name);
+            displaynameView.setText(name);
+
+        }
+
+        public void setStatus(String status){
+            TextView userstatusView = mView.findViewById(R.id.users_single_status);
+            userstatusView.setText(status);
+        }
+
+        public void setAvatar(String url_avatar){
+            CircleImageView userAvatarView = mView.findViewById(R.id.users_single_avatar);
+//                if user hadn't set avatar display default avatar
+            if(!url_avatar.equals("default")){
+                Picasso.get().load(url_avatar).into(userAvatarView);
+            }
+        }
     }
 }

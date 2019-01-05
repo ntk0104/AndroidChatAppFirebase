@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent" android:layout_height="match_parent">
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
 
     <de.hdodenhof.circleimageview.CircleImageView
         android:id="@+id/users_single_avatar"
@@ -12,26 +13,26 @@
         android:src="@drawable/defaultavatar" />
 
     <TextView
-        android:text="Display Name"
-        android:textSize="18dp"
-        android:textStyle="bold"
-        android:layout_toRightOf="@id/users_single_avatar"
-        android:layout_marginLeft="15dp"
-        android:layout_marginTop="10dp"
         android:id="@+id/users_single_name"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="15dp"
+        android:layout_marginTop="10dp"
+        android:layout_toRightOf="@id/users_single_avatar"
+        android:text="Display Name"
+        android:textSize="18dp"
+        android:textStyle="bold" />
 
     <TextView
-        android:text="User Status"
-        android:textSize="13dp"
-        android:layout_toRightOf="@id/users_single_avatar"
+        android:id="@+id/users_single_status"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:layout_below="@id/users_single_name"
         android:layout_marginLeft="15dp"
         android:layout_marginTop="10dp"
-        android:id="@+id/users_single_status"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+        android:layout_toRightOf="@id/users_single_avatar"
+        android:text="User Status"
+        android:textSize="13dp" />
 
 
 </RelativeLayout>
