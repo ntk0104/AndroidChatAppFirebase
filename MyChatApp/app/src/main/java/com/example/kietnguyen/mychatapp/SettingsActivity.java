@@ -2,6 +2,7 @@ package com.example.kietnguyen.mychatapp;
 
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -30,7 +31,12 @@ import com.squareup.picasso.Picasso;
 import com.theartofdev.edmodo.cropper.CropImage;
 import com.theartofdev.edmodo.cropper.CropImageView;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+
 import de.hdodenhof.circleimageview.CircleImageView;
+import id.zelory.compressor.Compressor;
 
 public class SettingsActivity extends AppCompatActivity {
     private CircleImageView userAvatar;
@@ -82,7 +88,8 @@ public class SettingsActivity extends AppCompatActivity {
                 userStatus.setText(status);
 //                if user hadn't set avatar display default avatar
                 if(!image.equals("default")){
-                    Picasso.get().load(image).into(userAvatar);
+//                    placeholder(src) display the image will be display while waiting the real img load complete
+                    Picasso.get().load(image).placeholder(R.drawable.defaultavatar).into(userAvatar);
                 }
             }
 
@@ -135,35 +142,86 @@ public class SettingsActivity extends AppCompatActivity {
                     .start(this);
 
         }
+
 //        get the cropped image uri
         if (requestCode == CropImage.CROP_IMAGE_ACTIVITY_REQUEST_CODE) {
             CropImage.ActivityResult result = CropImage.getActivityResult(data);
             if (resultCode == RESULT_OK) {
 //                uri of the cropped image being pushed to firebase storage
                 Uri resultUri = result.getUri();
-//                named the image file by uid
-                final StorageReference filepath = mFirebaseStorage.child("profile_images").child(uid + ".jpg");
-//                put image file to firebase storage
-                filepath.putFile(resultUri).addOnCompleteListener(new OnCompleteListener<UploadTask.TaskSnapshot>() {
-                    @Override
-                    public void onComplete(Task<UploadTask.TaskSnapshot> task) {
-                        if (task.isSuccessful()) {
-                            filepath.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
-                                @Override
-                                public void onSuccess(Uri uri) {
-                                    String download_uri = uri.toString();
-                                    mUserDatabase.child("image").setValue(download_uri);
-                                    mProgressDialog.dismiss();
-                                    Log.d("TAG", download_uri);
-                                    Toast.makeText(SettingsActivity.this, "Update image url succe", Toast.LENGTH_SHORT).show();
-                                }
-                            });
-                        }else {
-                            mProgressDialog.hide();
-                            Toast.makeText(SettingsActivity.this, "Update image url failed", Toast.LENGTH_SHORT).show();
+
+//                Upload thumb image with bitmap format to firebase storage
+//                create File object for uri of cropped image
+                File thumb_file_path = new File(resultUri.getPath());
+
+                try {
+//                    custom the compressor to compress the image
+                    Bitmap thumb_bitmap = new Compressor(this)
+                            .setMaxWidth(200)
+                            .setMaxHeight(200)
+                            .setQuality(75)
+                            .compressToBitmap(thumb_file_path);
+
+                    ByteArrayOutputStream thumbByteArrayOutputStream = new ByteArrayOutputStream();
+//                    compress the above thumb_bitmap to ByteArrayOutputStream
+                    thumb_bitmap.compress(Bitmap.CompressFormat.JPEG, 100, thumbByteArrayOutputStream);
+                    byte[] thumb_byte_data = thumbByteArrayOutputStream.toByteArray();
+//                    store thumb to firebase storage with path: profile_images -> thumbs -> namefile.jpg
+                    final StorageReference thumb_path = mFirebaseStorage.child("profile_images").child("thumbs").child(uid + ".jpg ");
+
+//                    Using uploadTask to upload bitmap format to firebase storage
+                    UploadTask uploadTask = thumb_path.putBytes(thumb_byte_data);
+                    uploadTask.addOnCompleteListener(new OnCompleteListener<UploadTask.TaskSnapshot>() {
+                        @Override
+                        public void onComplete(Task<UploadTask.TaskSnapshot> thumb_task) {
+                            if(thumb_task.isSuccessful()){
+                                Toast.makeText(SettingsActivity.this, "Uploaded thumb image successfully", Toast.LENGTH_SHORT).show();
+                                thumb_path.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                                    @Override
+                                    public void onSuccess(Uri uri) {
+                                        String thumb_download_uri = uri.toString();
+                                        mUserDatabase.child("thumb_image").setValue(thumb_download_uri);
+                                    }
+                                });
+                            }else {
+                                Toast.makeText(SettingsActivity.this, "Uploaded thumb image failed", Toast.LENGTH_SHORT).show();
+                            }
+
                         }
-                    }
-                });
+                    });
+
+//                    --------FINISHED WITH THUMB IMAGE
+
+
+
+//                    Upload directly with original image format
+//                named the original image file by uid
+                    final StorageReference filepath = mFirebaseStorage.child("profile_images").child(uid + ".jpg");
+//                put image file to firebase storage
+                    filepath.putFile(resultUri).addOnCompleteListener(new OnCompleteListener<UploadTask.TaskSnapshot>() {
+                        @Override
+                        public void onComplete(Task<UploadTask.TaskSnapshot> task) {
+                            if (task.isSuccessful()) {
+                                Toast.makeText(SettingsActivity.this, "Upload image successfully", Toast.LENGTH_SHORT).show();
+                                filepath.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                                    @Override
+                                    public void onSuccess(Uri uri) {
+                                        String download_uri = uri.toString();
+                                        mUserDatabase.child("image").setValue(download_uri);
+                                        mProgressDialog.dismiss();
+                                        Log.d("TAG", download_uri);
+                                        Toast.makeText(SettingsActivity.this, "Update image url succe", Toast.LENGTH_SHORT).show();
+                                    }
+                                });
+                            }else {
+                                mProgressDialog.hide();
+                                Toast.makeText(SettingsActivity.this, "Upload image failed", Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                    });
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
 
             } else if (resultCode == CropImage.CROP_IMAGE_ACTIVITY_RESULT_ERROR_CODE) {
                 Exception error = result.getError();

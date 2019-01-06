@@ -50,6 +50,7 @@ public class UsersActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
         FirebaseRecyclerOptions<Users> options = new FirebaseRecyclerOptions.Builder<Users>().setQuery(mUserDatabase, Users.class).build();
+
         FirebaseRecyclerAdapter adapter = new FirebaseRecyclerAdapter<Users, UsersViewHolder>(options) {
             @Override
             protected void onBindViewHolder(@NonNull UsersViewHolder holder, int position, @NonNull Users users) {
