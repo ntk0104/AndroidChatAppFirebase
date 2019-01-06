@@ -4,15 +4,62 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/common_google_signin_btn_text_dark_focused"
     tools:context=".ProfileActivity">
+
+    <ImageView
+        android:id="@+id/profile_avatar"
+        android:layout_width="match_parent"
+        android:layout_height="250dp"
+        android:scaleType="fitXY"
+        android:src="@drawable/defaultavatar" />
+
+    <TextView
+        android:id="@+id/profile_displayname"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/profile_avatar"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="30dp"
+        android:text="Display Name"
+        android:textColor="@color/common_google_signin_btn_text_dark_default"
+        android:textSize="30sp"
+        android:textStyle="bold" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
-        android:text="Display Name"
-        android:id="@+id/profile_displayname"
-        android:textSize="30sp"
+        android:layout_below="@id/profile_displayname"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="30dp"
+        android:id="@+id/profile_status"
+        android:text="User's Status"
+        android:textColor="@color/common_google_signin_btn_text_dark_default"
+        android:textSize="20sp" />
+
+    <TextView
+        android:text="N Friends | N Mutual Friends"
+        android:textColor="#ffffff"
+        android:layout_below="@id/profile_status"
+        android:id="@+id/profile_friends_info"
+        android:textSize="18sp"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="50sp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/profile_friends_info"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="50dp"
+        android:background="@android:color/holo_red_dark"
+        android:id="@+id/profile_btnSendFriendRequest"
+        android:padding="10dp"
+        android:text="Send friend request"
+        android:textColor="#FFFFFF"
         android:textStyle="bold" />
+
 
 </RelativeLayout>
