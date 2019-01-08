@@ -61,5 +61,45 @@
         android:textColor="#FFFFFF"
         android:textStyle="bold" />
 
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/profile_friends_info"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="50dp"
+        android:background="@android:color/holo_red_dark"
+        android:id="@+id/profile_btnCancelRequest"
+        android:padding="10dp"
+        android:text="Cancel friend request"
+        android:textColor="#FFFFFF"
+        android:textStyle="bold" />
+
+    <Button
+        android:id="@+id/profile_btnAcceptRequest"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/profile_btnSendFriendRequest"
+        android:layout_alignParentStart="true"
+        android:layout_marginLeft="50dp"
+        android:layout_marginTop="30dp"
+        android:background="@color/colorPrimary"
+        android:padding="10dp"
+        android:text="Accept"
+        android:textColor="#FFFFFF"
+        android:textStyle="bold" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/profile_btnSendFriendRequest"
+        android:layout_marginTop="30dp"
+        android:background="@android:color/holo_red_dark"
+        android:id="@+id/profile_btnDeclineRequest"
+        android:padding="10dp"
+        android:text="Decline"
+        android:layout_alignParentEnd="true"
+        android:layout_marginRight="50dp"
+        android:textColor="#FFFFFF"
+        android:textStyle="bold" />
 
 </RelativeLayout>
