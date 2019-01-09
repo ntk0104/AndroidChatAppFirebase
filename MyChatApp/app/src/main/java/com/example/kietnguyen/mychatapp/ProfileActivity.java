@@ -3,6 +3,7 @@ package com.example.kietnguyen.mychatapp;
 import android.app.ProgressDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -20,6 +21,8 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.squareup.picasso.Picasso;
 
+import okhttp3.internal.Util;
+
 public class ProfileActivity extends AppCompatActivity {
 
     private ImageView userAvatar;
@@ -33,7 +36,7 @@ public class ProfileActivity extends AppCompatActivity {
     private String friend_current_status;
 
     private FirebaseUser mCurrentUser; /*used to get current user logged info*/
-    private DatabaseReference mUserDatabase; /*used to read-write data to realtime database FOR USERS*/
+    private DatabaseReference mSelectedUser; /*used to read-write data to realtime database FOR SELECTED USERS*/
     private DatabaseReference mFriendRequestDatabase; /*used to read-write data to realtime database FOR FRIEND_REQST*/
     private ProgressDialog mProgressDialog; /*used to display progressDialog while waiting task completion*/
 
@@ -53,6 +56,11 @@ public class ProfileActivity extends AppCompatActivity {
         btnCancelRequest = findViewById(R.id.profile_btnCancelRequest);
         btnAcceptRequest = findViewById(R.id.profile_btnAcceptRequest);
         btnDeclineRequest = findViewById(R.id.profile_btnDeclineRequest);
+        /*database for edit user request*/
+        mFriendRequestDatabase = FirebaseDatabase.getInstance().getReference().child("Friend_Request");
+        mCurrentUser = FirebaseAuth.getInstance().getCurrentUser(); /*use mSelectedUser to get info relate with current user logged in*/
+        mSelectedUser = FirebaseDatabase.getInstance().getReference().child("Users").child(selected_userid); /*use to read/ write data to realtime database for USERs group*/
+
 
         /*Init visibility: false and turn off clickable of button */
         btnSendFriendRequest.setEnabled(false);
@@ -76,39 +84,71 @@ public class ProfileActivity extends AppCompatActivity {
         mProgressDialog.show();
 
         friend_current_status = "not_friend";
-        /*init displaying button when open*/
-        if(friend_current_status.equals("not_friend")){
-            /*display SendReq button*/
-            btnSendFriendRequest.setEnabled(true);
-            btnSendFriendRequest.setVisibility(View.VISIBLE);
 
-            btnCancelRequest.setEnabled(false);
-            btnCancelRequest.setVisibility(View.INVISIBLE);
+        mFriendRequestDatabase.child(mCurrentUser.getUid()).child(selected_userid).addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
 
-            btnAcceptRequest.setEnabled(false);
-            btnAcceptRequest.setVisibility(View.INVISIBLE);
+                try{
+                    String status = dataSnapshot.child("request_type").getValue().toString();
+                    if(!TextUtils.isEmpty(status) && status != null ){
+                        if(status.equals("sent")){
+                            friend_current_status = "sent_req";
+                            btnSendFriendRequest.setEnabled(false);
+                            btnSendFriendRequest.setVisibility(View.INVISIBLE);
+                            /*display the cancel button*/
+                            btnCancelRequest.setEnabled(true);
+                            btnCancelRequest.setVisibility(View.VISIBLE);
 
-            btnDeclineRequest.setEnabled(false);
-            btnDeclineRequest.setVisibility(View.INVISIBLE);
+                            btnAcceptRequest.setEnabled(false);
+                            btnAcceptRequest.setVisibility(View.INVISIBLE);
 
-        }else if(friend_current_status.equals("sent_req")){
-            btnSendFriendRequest.setEnabled(false);
-            btnSendFriendRequest.setVisibility(View.INVISIBLE);
-            /*display the cancel button*/
-            btnCancelRequest.setEnabled(true);
-            btnCancelRequest.setVisibility(View.VISIBLE);
+                            btnDeclineRequest.setEnabled(false);
+                            btnDeclineRequest.setVisibility(View.INVISIBLE);
+                        }else if(status.equals("received")){
+                            friend_current_status = "received_req";
+                            btnSendFriendRequest.setEnabled(false);
+                            btnSendFriendRequest.setVisibility(View.INVISIBLE);
+                            /*display the cancel button*/
+                            btnCancelRequest.setEnabled(false);
+                            btnCancelRequest.setVisibility(View.INVISIBLE);
 
-            btnAcceptRequest.setEnabled(false);
-            btnAcceptRequest.setVisibility(View.INVISIBLE);
+                            btnAcceptRequest.setEnabled(true);
+                            btnAcceptRequest.setVisibility(View.VISIBLE);
 
-            btnDeclineRequest.setEnabled(false);
-            btnDeclineRequest.setVisibility(View.INVISIBLE);
-        }
-        /*completed display view when open*/
+                            btnDeclineRequest.setEnabled(true);
+                            btnDeclineRequest.setVisibility(View.VISIBLE);
+                        }
+                    }
+                }catch (Exception e){
+                    friend_current_status = "not_friend";
+                    /*display SendReq button*/
+                    btnSendFriendRequest.setEnabled(true);
+                    btnSendFriendRequest.setVisibility(View.VISIBLE);
 
-        mCurrentUser = FirebaseAuth.getInstance().getCurrentUser(); /*use mUserDatabase to get info relate with current user logged in*/
-        mUserDatabase = FirebaseDatabase.getInstance().getReference().child("Users").child(selected_userid); /*use to read/ write data to realtime database for USERs group*/
-        mUserDatabase.addValueEventListener(new ValueEventListener() {
+                    btnCancelRequest.setEnabled(false);
+                    btnCancelRequest.setVisibility(View.INVISIBLE);
+
+                    btnAcceptRequest.setEnabled(false);
+                    btnAcceptRequest.setVisibility(View.INVISIBLE);
+
+                    btnDeclineRequest.setEnabled(false);
+                    btnDeclineRequest.setVisibility(View.INVISIBLE);
+                }
+
+
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+
+
+
+        /*get value of selected user and display it to activity*/
+        mSelectedUser.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 String display_name = dataSnapshot.child("name").getValue().toString();
@@ -132,7 +172,6 @@ public class ProfileActivity extends AppCompatActivity {
             }
         });
 
-        mFriendRequestDatabase = FirebaseDatabase.getInstance().getReference().child("Friend_Request");
         /*set event for btnSendFriendRequest*/
         btnSendFriendRequest.setOnClickListener(new View.OnClickListener() {
             @Override
