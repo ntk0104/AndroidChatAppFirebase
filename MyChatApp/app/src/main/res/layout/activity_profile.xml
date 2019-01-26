@@ -75,6 +75,19 @@
         android:textStyle="bold" />
 
     <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/profile_friends_info"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="50dp"
+        android:background="@android:color/holo_red_dark"
+        android:id="@+id/profile_btnUnfriend"
+        android:padding="10dp"
+        android:text="Unfriend"
+        android:textColor="#FFFFFF"
+        android:textStyle="bold" />
+
+    <Button
         android:id="@+id/profile_btnAcceptRequest"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

@@ -21,6 +21,9 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.squareup.picasso.Picasso;
 
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+
 import okhttp3.internal.Util;
 
 public class ProfileActivity extends AppCompatActivity {
@@ -31,6 +34,7 @@ public class ProfileActivity extends AppCompatActivity {
     private TextView friends_info; /*textview display number of other friends and total mutual friends*/
     private Button btnSendFriendRequest;
     private Button btnCancelRequest;
+    private Button btnUnfriend;
     private Button btnDeclineRequest;
     private Button btnAcceptRequest;
     private String friend_current_status;
@@ -38,6 +42,7 @@ public class ProfileActivity extends AppCompatActivity {
     private FirebaseUser mCurrentUser; /*used to get current user logged info*/
     private DatabaseReference mSelectedUser; /*used to read-write data to realtime database FOR SELECTED USERS*/
     private DatabaseReference mFriendRequestDatabase; /*used to read-write data to realtime database FOR FRIEND_REQST*/
+    private DatabaseReference mFriendListDatabase; /*used to read-write data to Friend_List*/
     private ProgressDialog mProgressDialog; /*used to display progressDialog while waiting task completion*/
 
     @Override
@@ -54,10 +59,12 @@ public class ProfileActivity extends AppCompatActivity {
         friends_info = findViewById(R.id.profile_friends_info);
         btnSendFriendRequest = findViewById(R.id.profile_btnSendFriendRequest);
         btnCancelRequest = findViewById(R.id.profile_btnCancelRequest);
+        btnUnfriend = findViewById(R.id.profile_btnUnfriend);
         btnAcceptRequest = findViewById(R.id.profile_btnAcceptRequest);
         btnDeclineRequest = findViewById(R.id.profile_btnDeclineRequest);
         /*database for edit user request*/
         mFriendRequestDatabase = FirebaseDatabase.getInstance().getReference().child("Friend_Request");
+        mFriendListDatabase = FirebaseDatabase.getInstance().getReference().child("Friend_List");
         mCurrentUser = FirebaseAuth.getInstance().getCurrentUser(); /*use mSelectedUser to get info relate with current user logged in*/
         mSelectedUser = FirebaseDatabase.getInstance().getReference().child("Users").child(selected_userid); /*use to read/ write data to realtime database for USERs group*/
 
@@ -68,6 +75,9 @@ public class ProfileActivity extends AppCompatActivity {
 
         btnCancelRequest.setEnabled(false);
         btnCancelRequest.setVisibility(View.INVISIBLE);
+
+        btnUnfriend.setEnabled(false);
+        btnUnfriend.setVisibility(View.INVISIBLE);
 
         btnAcceptRequest.setEnabled(false);
         btnAcceptRequest.setVisibility(View.INVISIBLE);
@@ -82,16 +92,16 @@ public class ProfileActivity extends AppCompatActivity {
         mProgressDialog.setMessage("Wait a minute");
         mProgressDialog.setCanceledOnTouchOutside(false); /*used to avoid user tap outside with canceling purpose*/
         mProgressDialog.show();
-
+        // declare the default initial friend_status
         friend_current_status = "not_friend";
-
+        // find in Friend_Requset database to get the status of the friend request with selected person
         mFriendRequestDatabase.child(mCurrentUser.getUid()).child(selected_userid).addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-
                 try{
                     String status = dataSnapshot.child("request_type").getValue().toString();
                     if(!TextUtils.isEmpty(status) && status != null ){
+                        /*if the current status is sent : meaning you have already sent a friend_request to this people*/
                         if(status.equals("sent")){
                             friend_current_status = "sent_req";
                             btnSendFriendRequest.setEnabled(false);
@@ -100,40 +110,86 @@ public class ProfileActivity extends AppCompatActivity {
                             btnCancelRequest.setEnabled(true);
                             btnCancelRequest.setVisibility(View.VISIBLE);
 
-                            btnAcceptRequest.setEnabled(false);
-                            btnAcceptRequest.setVisibility(View.INVISIBLE);
+                            btnUnfriend.setEnabled(false);
+                            btnUnfriend.setVisibility(View.INVISIBLE);
 
                             btnDeclineRequest.setEnabled(false);
                             btnDeclineRequest.setVisibility(View.INVISIBLE);
-                        }else if(status.equals("received")){
+
+                            btnAcceptRequest.setEnabled(false);
+                            btnAcceptRequest.setVisibility(View.INVISIBLE);
+
+                        }else if(status.equals("received")){ /*if the current status is received: meaning this person had already sent to you a friend request*/
                             friend_current_status = "received_req";
                             btnSendFriendRequest.setEnabled(false);
                             btnSendFriendRequest.setVisibility(View.INVISIBLE);
-                            /*display the cancel button*/
+
                             btnCancelRequest.setEnabled(false);
                             btnCancelRequest.setVisibility(View.INVISIBLE);
 
-                            btnAcceptRequest.setEnabled(true);
-                            btnAcceptRequest.setVisibility(View.VISIBLE);
+                            btnUnfriend.setEnabled(false);
+                            btnUnfriend.setVisibility(View.INVISIBLE);
 
                             btnDeclineRequest.setEnabled(true);
                             btnDeclineRequest.setVisibility(View.VISIBLE);
+
+                            /*display the accept/decline button*/
+                            btnAcceptRequest.setEnabled(true);
+                            btnAcceptRequest.setVisibility(View.VISIBLE);
+
                         }
                     }
                 }catch (Exception e){
-                    friend_current_status = "not_friend";
-                    /*display SendReq button*/
-                    btnSendFriendRequest.setEnabled(true);
-                    btnSendFriendRequest.setVisibility(View.VISIBLE);
+                    /*if cannot found value in friend_request we will found value is friend database*/
+                    mFriendListDatabase.child(mCurrentUser.getUid()).child(selected_userid).addValueEventListener(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(DataSnapshot dataSnapshot) {
+                            try{
+                                String status = dataSnapshot.child("from").getValue().toString();
 
-                    btnCancelRequest.setEnabled(false);
-                    btnCancelRequest.setVisibility(View.INVISIBLE);
+                                friend_current_status = "is_friend";
+                                btnSendFriendRequest.setEnabled(false);
+                                btnSendFriendRequest.setVisibility(View.INVISIBLE);
 
-                    btnAcceptRequest.setEnabled(false);
-                    btnAcceptRequest.setVisibility(View.INVISIBLE);
+                                btnCancelRequest.setEnabled(false);
+                                btnCancelRequest.setVisibility(View.INVISIBLE);
 
-                    btnDeclineRequest.setEnabled(false);
-                    btnDeclineRequest.setVisibility(View.INVISIBLE);
+                                btnUnfriend.setEnabled(true);
+                                btnUnfriend.setVisibility(View.VISIBLE);
+
+                                btnAcceptRequest.setEnabled(false);
+                                btnAcceptRequest.setVisibility(View.INVISIBLE);
+
+                                btnDeclineRequest.setEnabled(false);
+                                btnDeclineRequest.setVisibility(View.INVISIBLE);
+
+                            }catch (Exception e){
+                                // If don't have data in friend request between you and this person and didn't found value in friendlist also => we assume they are not friend
+                                friend_current_status = "not_friend";
+                                /*display SendReq button*/
+                                btnSendFriendRequest.setEnabled(true);
+                                btnSendFriendRequest.setVisibility(View.VISIBLE);
+
+                                btnCancelRequest.setEnabled(false);
+                                btnCancelRequest.setVisibility(View.INVISIBLE);
+
+                                btnUnfriend.setEnabled(false);
+                                btnUnfriend.setVisibility(View.INVISIBLE);
+
+                                btnAcceptRequest.setEnabled(false);
+                                btnAcceptRequest.setVisibility(View.INVISIBLE);
+
+                                btnDeclineRequest.setEnabled(false);
+                                btnDeclineRequest.setVisibility(View.INVISIBLE);
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(DatabaseError databaseError) {
+
+                        }
+                    });
+
                 }
 
 
@@ -215,6 +271,33 @@ public class ProfileActivity extends AppCompatActivity {
                 mFriendRequestDatabase.child(mCurrentUser.getUid()).child(selected_userid).removeValue();
                 /*delete the received_request data for receiver*/
                 mFriendRequestDatabase.child(selected_userid).child(mCurrentUser.getUid()).removeValue();
+            }
+        });
+
+        /*set event for btnAccept*/
+        btnAcceptRequest.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                /*Delete friend-request sent in Friend_request  for selected_userid*/
+                mFriendRequestDatabase.child(selected_userid).child(mCurrentUser.getUid()).removeValue();
+                /*Delete friend-request received in Friend_request for mCurrentUser*/
+                mFriendRequestDatabase.child(mCurrentUser.getUid()).child(selected_userid).removeValue();
+                /*Insert mCurrentUser to list friend of selected_userid*/
+                String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(Calendar.getInstance().getTime());
+                mFriendListDatabase.child(selected_userid).child(mCurrentUser.getUid()).child("from").setValue(timeStamp);
+                /*Insert selected_userid to list friend of mCurrentUser*/
+                mFriendListDatabase.child(mCurrentUser.getUid()).child(selected_userid).child("from").setValue(timeStamp);
+            }
+        });
+
+        /*set event for btn Unfriend*/
+        btnUnfriend.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                /*delete selected user in friend list of the currentUSer*/
+                mFriendListDatabase.child(mCurrentUser.getUid()).child(selected_userid).removeValue();
+                /*delete current user in friend list of selected user*/
+                mFriendListDatabase.child(selected_userid).child(mCurrentUser.getUid()).removeValue();
             }
         });
 
