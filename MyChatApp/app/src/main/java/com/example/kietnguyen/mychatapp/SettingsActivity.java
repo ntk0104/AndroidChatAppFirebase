@@ -74,6 +74,8 @@ public class SettingsActivity extends AppCompatActivity {
         uid = mCurrentUser.getUid();
 //        get data of current user from this node
         mUserDatabase = FirebaseDatabase.getInstance().getReference().child("Users").child(uid);
+        /*save strings value for purposing offline capability*/
+        mUserDatabase.keepSynced(true);
 //        get data from firebase
         mUserDatabase.addValueEventListener(new ValueEventListener() {
             @Override
